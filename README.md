@@ -20,10 +20,11 @@ Run the setup script to create your local Kubernetes cluster:
 The `run.sh` script:
 
 1. Verifies Docker is installed and running
-2. Downloads and installs Kind (Kubernetes IN Docker) for your architecture
-3. Creates a Kubernetes cluster named "sandbox"
-4. Verifies the cluster is running
-5. Provides confirmation and usage instructions
+2. Checks and installs Kind (Kubernetes IN Docker) if not present
+3. Checks and installs kubectl if not present
+4. Creates a Kubernetes cluster named "sandbox"
+5. Verifies the cluster is running
+6. Provides confirmation and usage instructions
 
 ## Usage
 

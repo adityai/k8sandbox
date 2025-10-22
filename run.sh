@@ -8,30 +8,55 @@ if ! command -v docker &> /dev/null; then
     exit 1
 fi
 
-# Detect architecture and OS
-ARCH=$(uname -m)
-OS=$(uname -s | tr '[:upper:]' '[:lower:]')
-
-# Download and install Kind based on architecture
-if [ "$ARCH" = "arm64" ]; then
-    curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.30.0/kind-${OS}-arm64
-elif [ "$ARCH" = "x86_64" ]; then
-    curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.30.0/kind-${OS}-amd64
+# Check if kind is installed
+if ! command -v kind &> /dev/null; then
+    echo "Installing kind..."
+    ARCH=$(uname -m)
+    OS=$(uname -s | tr '[:upper:]' '[:lower:]')
+    
+    if [ "$ARCH" = "arm64" ]; then
+        curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.30.0/kind-${OS}-arm64
+    elif [ "$ARCH" = "x86_64" ]; then
+        curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.30.0/kind-${OS}-amd64
+    else
+        echo "Unsupported architecture: $ARCH"
+        exit 1
+    fi
+    
+    chmod +x ./kind
+    sudo mv ./kind /usr/local/bin/kind
 else
-    echo "Unsupported architecture: $ARCH"
-    exit 1
+    echo "kind is already installed"
 fi
 
-chmod +x ./kind
-sudo mv ./kind /usr/local/bin/kind
+# Check if kubectl is installed
+if ! command -v kubectl &> /dev/null; then
+    echo "Installing kubectl..."
+    ARCH=$(uname -m)
+    OS=$(uname -s | tr '[:upper:]' '[:lower:]')
+    
+    if [ "$ARCH" = "arm64" ]; then
+        curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/${OS}/arm64/kubectl"
+    elif [ "$ARCH" = "x86_64" ]; then
+        curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/${OS}/amd64/kubectl"
+    else
+        echo "Unsupported architecture: $ARCH"
+        exit 1
+    fi
+    
+    chmod +x ./kubectl
+    sudo mv ./kubectl /usr/local/bin/kubectl
+else
+    echo "kubectl is already installed"
+fi
 
-
-# curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/darwin/arm64/kubectl"
-# chmod +x ./kubectl
-# sudo mv ./kubectl /usr/local/bin/kubectl
-
-# Create the Kubernetes cluster
-kind create cluster --name sandbox
+# Check if cluster already exists
+if kind get clusters | grep -q "^sandbox$"; then
+    echo "Cluster 'sandbox' is already running"
+else
+    echo "Creating cluster 'sandbox'..."
+    kind create cluster --name sandbox
+fi
 
 # Verify the cluster is running
 kubectl cluster-info --context kind-sandbox
